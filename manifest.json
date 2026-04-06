@@ -1,0 +1,9 @@
+{
+    "id": "taggr-sync",
+    "name": "Taggr Sync",
+    "version": "0.1.0",
+    "minAppVersion": "1.0.0",
+    "description": "Sync your Obsidian vault with Taggr — a decentralized publishing platform on the Internet Computer.",
+    "author": "taggrobs",
+    "isDesktopOnly": false
+}
