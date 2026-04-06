@@ -39,13 +39,19 @@ Obsidian vault                           Taggr canister (IC)
 
 ### Step 1: Create a Taggr account
 
+You need one of the following to create a Taggr account:
+- **An invite code** — get one from an existing Taggr user, or register at [register.taggr.social](https://register.taggr.social) (the invite comes preloaded with credits), or
+- **ICP tokens** to convert into Taggr credits yourself
+
+Once you have one of these:
+
 1. Go to [taggr.link](https://taggr.link)
 2. Click **Connect** (top right)
 3. Choose **Seed Phrase** as your login method
 4. Enter a strong seed phrase — this is your password, save it securely. A good seed phrase is a BIP-39 mnemonic (12+ random words) or a strong passphrase (16+ characters with mixed case, numbers, symbols)
 5. Confirm the seed phrase
-6. Choose a **username** (this is your handle)
-7. Done — you now have a Taggr account with some starting credits
+6. If using an invite code, enter it when prompted. If using ICP, follow the on-screen instructions to convert ICP to credits
+7. Choose a **username** (this is your handle)
 
 **Important:** Remember your seed phrase and username. You'll need both for the plugin.
 
