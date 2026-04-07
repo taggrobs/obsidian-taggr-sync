@@ -123,20 +123,23 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
                     }),
             );
 
+        const realms = Array.isArray(this.plugin.settings.cachedRealms) ? this.plugin.settings.cachedRealms : [];
+
         new Setting(containerEl)
             .setName("Realm Filter")
             .setDesc("Only pull posts from this realm. Empty = all realms.")
-            .addText((text) =>
-                text
-                    .setPlaceholder("")
+            .addDropdown((dropdown) => {
+                dropdown.addOption("", "(all realms)");
+                for (const realm of realms) {
+                    dropdown.addOption(realm, realm);
+                }
+                dropdown
                     .setValue(this.plugin.settings.realmFilter)
                     .onChange(async (value) => {
                         this.plugin.settings.realmFilter = value;
                         await this.plugin.saveSettings();
-                    }),
-            );
-
-        const realms = Array.isArray(this.plugin.settings.cachedRealms) ? this.plugin.settings.cachedRealms : [];
+                    });
+            });
         new Setting(containerEl)
             .setName("Default Realm for New Posts")
             .setDesc(

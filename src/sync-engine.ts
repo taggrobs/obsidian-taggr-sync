@@ -82,19 +82,17 @@ export class SyncEngine {
                 }
 
                 const remoteHash = simpleHash(post.body);
-                const needsMetaUpdate = !frontmatter.taggr_cost || !content.includes("taggr_status");
-                if (frontmatter.taggr_hash === remoteHash && !needsMetaUpdate) {
+                if (frontmatter.taggr_hash === remoteHash) {
                     stats.skipped++;
                     continue;
                 }
 
-                // Remote has changes — check if local also changed
+                // Remote body changed — check if local also changed
                 const localBody = this.extractBody(content);
                 const localHash = simpleHash(localBody);
 
                 if (localHash !== frontmatter.taggr_hash) {
                     // Both sides changed — conflict
-                    // For now: remote wins, local saved as .conflict
                     const conflictPath = existingPath.replace(".md", ".conflict.md");
                     await this.vault.create(conflictPath, content);
                     new Notice(`Taggr Sync: Conflict on "${file.basename}" — local backup saved.`);
@@ -222,8 +220,23 @@ export class SyncEngine {
                 continue;
             }
 
-            // Process local images → Taggr blobs
-            const { body: processedBody, blobs } = await this.prepareImageBlobs(body, file.path);
+            // Convert body back to Taggr format for comparison and pushing
+            let taggrbody = await this.backlinksToTaggrLinks(body, localIndex);
+            taggrbody = taggrbody.replace(
+                /\(https:\/\/[a-z0-9-]+\.raw\.icp0\.io\/image\?offset=\d+&len=\d+\)/g,
+                (match) => match, // keep as-is for now
+            );
+
+            // Check if local body changed since last sync
+            const pushHash = simpleHash(taggrbody);
+            if (frontmatter?.taggr_id) {
+                if (pushHash === frontmatter.taggr_hash) {
+                    continue; // No local changes — skip
+                }
+            }
+
+            // Process local images → Taggr blobs (only if we're actually pushing)
+            const { body: processedBody, blobs } = await this.prepareImageBlobs(taggrbody, file.path);
 
             // Estimate and display cost
             const cost = await this.client.estimateCost(processedBody);
@@ -238,11 +251,6 @@ export class SyncEngine {
             }
 
             if (frontmatter?.taggr_id) {
-                // Existing post — check if local changed since last sync
-                const currentHash = simpleHash(processedBody);
-                if (currentHash === frontmatter.taggr_hash && blobs.length === 0) {
-                    continue; // No local changes
-                }
 
                 // Generate a simple patch description
                 const patch = `Updated from Obsidian at ${new Date().toISOString()}`;
@@ -255,13 +263,13 @@ export class SyncEngine {
                 );
 
                 if ("ok" in result) {
-                    // Update frontmatter with new hash
+                    // Update frontmatter with Taggr-format hash
                     const updatedFm: Partial<TaggrFrontmatter> = {
                         ...frontmatter,
-                        taggr_hash: currentHash,
+                        taggr_hash: pushHash,
                         taggr_patches: (frontmatter.taggr_patches || 0) + 1,
                     };
-                    const newContent = this.rebuildFileContent(updatedFm as TaggrFrontmatter, processedBody);
+                    const newContent = this.rebuildFileContent(updatedFm as TaggrFrontmatter, body);
                     await this.vault.modify(file, newContent);
                     stats.updated++;
                 } else {
@@ -326,6 +334,8 @@ export class SyncEngine {
      */
     private buildFileContent(post: TaggrPost): string {
         const tags = this.extractTagsFromBody(post.body);
+        // Hash the RAW body from Taggr BEFORE any conversions
+        const rawBodyHash = simpleHash(post.body);
         // Replace /blob/xxx with real bucket image URLs
         post.body = post.body.replace(
             /\(\/blob\/([a-f0-9]+)\)/g,
@@ -346,17 +356,28 @@ export class SyncEngine {
         // Convert Taggr post links to Obsidian backlinks
         post.body = this.taggrLinksToBacklinks(post.body);
 
+        // Build reactions summary
+        const reactionParts: string[] = [];
+        for (const [id, users] of Object.entries(post.reactions || {})) {
+            const name = REACTION_EMOJI[Number(id)] || `r${id}`;
+            reactionParts.push(`${name}:${(users as number[]).length}`);
+        }
+
         const fm: TaggrFrontmatter = {
             taggr_id: post.id,
             taggr_user: post.user,
             taggr_realm: post.realm,
             taggr_timestamp: post.timestamp,
-            taggr_hash: simpleHash(post.body),
+            taggr_hash: rawBodyHash,
             taggr_patches: post.patches?.length || 0,
             tags: tags.length > 0 ? tags : undefined,
             published: true,
             taggr_cost: this.calculatePostCost(post),
+            taggr_reactions: reactionParts.length > 0 ? reactionParts.join(", ") : undefined,
+            taggr_comments: post.children?.length || 0,
+            taggr_tips: post.tips?.reduce((sum, [, amount]) => sum + amount, 0) || 0,
         };
+
         return this.rebuildFileContent(fm, post.body);
     }
 
@@ -375,6 +396,9 @@ export class SyncEngine {
         if (fm.tags && fm.tags.length > 0) {
             lines.push(`tags: [${fm.tags.map((t) => `"${t}"`).join(", ")}]`);
         }
+        if (fm.taggr_reactions) lines.push(`taggr_reactions: "${fm.taggr_reactions}"`);
+        if (fm.taggr_comments) lines.push(`taggr_comments: ${fm.taggr_comments}`);
+        if (fm.taggr_tips) lines.push(`taggr_tips: ${fm.taggr_tips}`);
         lines.push(`published: ${fm.published}`);
         if (fm.published && fm.taggr_id) {
             lines.push(`taggr_status: "live on Taggr — uncheck published to delete from Taggr"`);
@@ -821,6 +845,21 @@ async function resizeImage(data: ArrayBuffer): Promise<{ bytes: Uint8Array; widt
         height,
     };
 }
+
+// ─── REACTIONS MAP ────────────────────────────────────────────────────
+
+const REACTION_EMOJI: { [id: number]: string } = {
+    1: "downvote",
+    10: "heart",
+    11: "thumbsup",
+    12: "sad",
+    50: "fire",
+    51: "laugh",
+    52: "hundred",
+    53: "rocket",
+    100: "star",
+    101: "pirate",
+};
 
 // ─── UTILS ─────────────────────────────────────────────────────────────
 

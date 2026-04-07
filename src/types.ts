@@ -69,6 +69,9 @@ export type TaggrFrontmatter = {
     tags?: string[];
     published: boolean;
     taggr_cost?: number;
+    taggr_reactions?: string;      // e.g. "fire:4, star:1, pirate:2"
+    taggr_comments?: number;       // number of direct comments
+    taggr_tips?: number;           // total tips received
 };
 
 /**

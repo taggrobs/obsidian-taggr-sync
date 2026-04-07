@@ -1,5 +1,7 @@
 # Taggr Sync for Obsidian
 
+> **Developers and AI agents:** Start with [`docs/agents.md`](docs/agents.md) for architecture, design decisions, and Taggr API specifics. Then read [`docs/logs.md`](docs/logs.md) for chronological development history with justifications. [`docs/roadmap.md`](docs/roadmap.md) for planned features.
+
 Bidirectional sync between your Obsidian vault and [Taggr](https://taggr.link) — a decentralized publishing platform on the Internet Computer.
 
 Write and edit posts in Obsidian's markdown editor, sync them to Taggr, and pull posts back. Works on desktop and mobile.
