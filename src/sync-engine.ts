@@ -45,11 +45,35 @@ export class SyncEngine {
 
         new Notice("Taggr Sync: Pulling posts...");
 
-        const posts = await this.client.fetchAllJournal(this.settings.handle);
+        let posts: TaggrPost[];
+        try {
+            const fetcher = this.settings.pullComments
+                ? this.client.fetchAllUserPosts.bind(this.client)
+                : this.client.fetchAllJournal.bind(this.client);
+            posts = await fetcher(
+                this.settings.handle,
+                (page: number, count: number) => {
+                    if (page > 0 && page % 10 === 0) {
+                        new Notice(`Taggr Sync: Pulled ${count} posts (page ${page})...`);
+                    }
+                },
+            );
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            console.error("Taggr Sync: Journal fetch failed:", error);
+            new Notice(
+                `Taggr Sync: Pull FAILED — ${msg}. Some posts may be missing. Check console (Ctrl+Shift+I) for details.`,
+                10000,
+            );
+            return stats;
+        }
+
         if (!posts.length) {
             new Notice("Taggr Sync: No posts found.");
             return stats;
         }
+
+        new Notice(`Taggr Sync: Fetched ${posts.length} posts from Taggr, processing...`);
 
         // Ensure sync folder exists
         await this.ensureFolder(this.settings.syncFolder);
@@ -58,8 +82,8 @@ export class SyncEngine {
         const localIndex = await this.buildLocalIndex();
 
         for (const post of posts) {
-            // Skip comments (only sync top-level posts)
-            if (post.parent) continue;
+            // Skip comments unless pullComments is enabled
+            if (post.parent && !this.settings.pullComments) continue;
 
             // Apply realm filter
             if (this.settings.realmFilter && post.realm !== this.settings.realmFilter) {
@@ -103,9 +127,13 @@ export class SyncEngine {
                 await this.vault.modify(file, newContent);
                 stats.updated++;
             } else {
-                // New post — create local file in realm subfolder
-                const realmFolder = post.realm || "_general";
-                const subFolder = normalizePath(`${this.settings.syncFolder}/${realmFolder}`);
+                // New post — create local file.
+                // Comments go in _comments/ folder (flat, no realm subfolders)
+                // Top-level posts go in realm subfolders
+                const subFolderName = post.parent
+                    ? "_comments"
+                    : (post.realm || "_general");
+                const subFolder = normalizePath(`${this.settings.syncFolder}/${subFolderName}`);
                 await this.ensureFolder(subFolder);
 
                 const fileName = this.postToFileName(post);
@@ -376,6 +404,8 @@ export class SyncEngine {
             taggr_reactions: reactionParts.length > 0 ? reactionParts.join(", ") : undefined,
             taggr_comments: post.children?.length || 0,
             taggr_tips: post.tips?.reduce((sum, [, amount]) => sum + amount, 0) || 0,
+            taggr_parent_id: post.parent,
+            taggr_parent_link: post.parent ? `https://taggr.link/#/post/${post.parent}` : undefined,
         };
 
         return this.rebuildFileContent(fm, post.body);
@@ -399,6 +429,10 @@ export class SyncEngine {
         if (fm.taggr_reactions) lines.push(`taggr_reactions: "${fm.taggr_reactions}"`);
         if (fm.taggr_comments) lines.push(`taggr_comments: ${fm.taggr_comments}`);
         if (fm.taggr_tips) lines.push(`taggr_tips: ${fm.taggr_tips}`);
+        if (fm.taggr_parent_id) {
+            lines.push(`taggr_parent_id: ${fm.taggr_parent_id}`);
+            lines.push(`taggr_parent_link: "${fm.taggr_parent_link}"`);
+        }
         lines.push(`published: ${fm.published}`);
         if (fm.published && fm.taggr_id) {
             lines.push(`taggr_status: "live on Taggr — uncheck published to delete from Taggr"`);
@@ -450,6 +484,9 @@ export class SyncEngine {
                 case "taggr_patches":
                     fm.taggr_patches = parseInt(value);
                     break;
+                case "taggr_parent_id":
+                    fm.taggr_parent_id = parseInt(value);
+                    break;
                 case "published":
                     fm.published = value === "true";
                     break;
@@ -497,7 +534,8 @@ export class SyncEngine {
         const parts = relative.split("/");
         if (parts.length < 2) return undefined; // file directly in sync folder
         const folder = parts[0];
-        if (folder === "_general") return undefined;
+        // Special folders don't map to a realm
+        if (folder === "_general" || folder === "_comments") return undefined;
         return folder;
     }
 

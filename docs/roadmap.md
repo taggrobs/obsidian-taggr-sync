@@ -1,5 +1,14 @@
 # Roadmap — obsidian-taggr-sync
 
+## Completed (v0.1.2)
+
+- [x] **Robust pagination with retries** — 3 attempts with exponential backoff per page, throws on persistent error instead of silently breaking
+- [x] **Per-page progress logging** — console logs and progress Notices every 10 pages during long pulls
+- [x] **Pull comments toggle** — `pullComments` setting enables fetching via `user_posts` (includes comments)
+- [x] **Dedicated comments folder** — comments stored in `_comments/` flat folder, not mixed with realm posts
+- [x] **Parent post link in comment frontmatter** — `taggr_parent_id` and `taggr_parent_link` fields
+- [x] **Clear error reporting** — failed pulls now show a Notice with the exact error, directing users to the console
+
 ## Completed (v0.1.0)
 
 - [x] Pull posts from Taggr journal

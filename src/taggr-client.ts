@@ -66,27 +66,138 @@ export class TaggrClient {
         handle: string,
         page: number = 0,
         offset: PostId = 0,
-    ): Promise<TaggrPost[]> {
+    ): Promise<TaggrPost[] | null> {
         const domain = "taggr.link";
         const args = [domain, handle, page, offset];
-        const raw = await this.queryJSON<[TaggrPost, unknown][]>("journal", args) || [];
+        const raw = await this.queryJSON<[TaggrPost, unknown][]>("journal", args);
+        if (raw === null) return null; // distinguish error from empty
         return raw.map(([post]) => post);
     }
 
     /**
-     * Fetch all journal pages for a user.
+     * Fetch a single page with retries. Throws if all retries fail.
      */
-    async fetchAllJournal(handle: string): Promise<TaggrPost[]> {
+    private async fetchJournalPageWithRetry(
+        handle: string,
+        page: number,
+        maxRetries: number = 3,
+    ): Promise<TaggrPost[]> {
+        let lastError: string = "";
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            const posts = await this.fetchJournal(handle, page, 0);
+            if (posts !== null) return posts;
+            lastError = `Query error on page ${page}`;
+            // Exponential backoff: 500ms, 1s, 2s
+            if (attempt < maxRetries - 1) {
+                await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+            }
+        }
+        throw new Error(`Failed to fetch journal page ${page} after ${maxRetries} retries: ${lastError}`);
+    }
+
+    /**
+     * Fetch all journal pages for a user.
+     * Retries on errors, logs progress, throws if pagination fails mid-way.
+     */
+    async fetchAllJournal(
+        handle: string,
+        onProgress?: (page: number, count: number) => void,
+    ): Promise<TaggrPost[]> {
         const allPosts: TaggrPost[] = [];
         let page = 0;
         const pageSize = 30; // Taggr's CONFIG.feed_page_size
+        const maxPages = 200; // Safety limit: 6000 posts max
 
-        while (true) {
-            const posts = await this.fetchJournal(handle, page, 0);
-            if (!posts || posts.length === 0) break;
+        while (page < maxPages) {
+            const posts = await this.fetchJournalPageWithRetry(handle, page);
+            if (posts.length === 0) {
+                console.log(`[TaggrClient] Journal complete at page ${page} (empty response)`);
+                break;
+            }
             allPosts.push(...posts);
-            if (posts.length < pageSize) break;
+            onProgress?.(page, allPosts.length);
+            console.log(`[TaggrClient] Journal page ${page}: ${posts.length} posts (total: ${allPosts.length})`);
+            if (posts.length < pageSize) {
+                console.log(`[TaggrClient] Journal complete at page ${page} (partial page)`);
+                break;
+            }
             page++;
+        }
+
+        if (page >= maxPages) {
+            console.warn(`[TaggrClient] Hit max pages limit (${maxPages}). User may have more posts.`);
+        }
+
+        return allPosts;
+    }
+
+    /**
+     * Fetch a user's posts INCLUDING comments.
+     * Mirrors: canister_query user_posts(domain, handle, page, offset)
+     * Returns tuples of [Post, Meta] — we unwrap to just Post.
+     */
+    async fetchUserPosts(
+        handle: string,
+        page: number = 0,
+        offset: PostId = 0,
+    ): Promise<TaggrPost[] | null> {
+        const domain = "taggr.link";
+        const args = [domain, handle, page, offset];
+        const raw = await this.queryJSON<[TaggrPost, unknown][]>("user_posts", args);
+        if (raw === null) return null;
+        return raw.map(([post]) => post);
+    }
+
+    /**
+     * Fetch a single user_posts page with retries.
+     */
+    private async fetchUserPostsPageWithRetry(
+        handle: string,
+        page: number,
+        maxRetries: number = 3,
+    ): Promise<TaggrPost[]> {
+        let lastError: string = "";
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            const posts = await this.fetchUserPosts(handle, page, 0);
+            if (posts !== null) return posts;
+            lastError = `Query error on page ${page}`;
+            if (attempt < maxRetries - 1) {
+                await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+            }
+        }
+        throw new Error(`Failed to fetch user_posts page ${page} after ${maxRetries} retries: ${lastError}`);
+    }
+
+    /**
+     * Fetch all user_posts pages for a user (posts + comments).
+     */
+    async fetchAllUserPosts(
+        handle: string,
+        onProgress?: (page: number, count: number) => void,
+    ): Promise<TaggrPost[]> {
+        const allPosts: TaggrPost[] = [];
+        let page = 0;
+        const pageSize = 30;
+        const maxPages = 300; // Higher limit since comments add to count
+
+        while (page < maxPages) {
+            const posts = await this.fetchUserPostsPageWithRetry(handle, page);
+            if (posts.length === 0) {
+                console.log(`[TaggrClient] user_posts complete at page ${page} (empty)`);
+                break;
+            }
+            allPosts.push(...posts);
+            onProgress?.(page, allPosts.length);
+            console.log(`[TaggrClient] user_posts page ${page}: ${posts.length} (total: ${allPosts.length})`);
+            if (posts.length < pageSize) {
+                console.log(`[TaggrClient] user_posts complete at page ${page} (partial)`);
+                break;
+            }
+            page++;
+        }
+
+        if (page >= maxPages) {
+            console.warn(`[TaggrClient] Hit max pages limit (${maxPages}).`);
         }
 
         return allPosts;

@@ -72,6 +72,8 @@ export type TaggrFrontmatter = {
     taggr_reactions?: string;      // e.g. "fire:4, star:1, pirate:2"
     taggr_comments?: number;       // number of direct comments
     taggr_tips?: number;           // total tips received
+    taggr_parent_id?: PostId;      // if this is a comment, the parent post ID
+    taggr_parent_link?: string;    // direct link to parent on Taggr
 };
 
 /**
@@ -104,6 +106,8 @@ export interface TaggrSyncSettings {
     seedPhrase: string;
     /** Only sync posts from this realm (empty = all) */
     realmFilter: string;
+    /** Also pull comments (posts with parent), not just top-level posts */
+    pullComments: boolean;
     /** Default realm for new posts (empty = no realm) */
     defaultRealm: string;
     /** Cached list of user's realms (populated on connection) */
@@ -121,6 +125,7 @@ export const DEFAULT_SETTINGS: TaggrSyncSettings = {
     identityKeyHex: "",
     seedPhrase: "",
     realmFilter: "",
+    pullComments: false,
     defaultRealm: "",
     cachedRealms: [],
     syncDirection: "both",

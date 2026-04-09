@@ -22,6 +22,23 @@ src/
   types.ts         — TypeScript types: TaggrPost, TaggrUser, TaggrFrontmatter, settings
 ```
 
+## Pagination & error handling
+
+### Journal / user_posts fetching
+- `fetchJournal(handle, page, offset)` returns `TaggrPost[] | null` — `null` on query error, `[]` when no more posts. This lets callers distinguish errors from end-of-data.
+- `fetchAllJournal(handle, onProgress?)` wraps pagination with retries (3 attempts, exponential backoff 500ms/1s/2s). Throws on persistent failure instead of silently breaking. Safety limit: 200 pages (6000 posts).
+- `fetchAllUserPosts(handle, onProgress?)` — same but uses the `user_posts` query (includes comments). Safety limit: 300 pages.
+- Both log per-page progress to console: `[TaggrClient] Journal page N: X posts (total: Y)`.
+- `sync-engine.pull()` catches errors from fetch and shows a clear Notice with the error message, directing the user to the console for details. Previously, pagination would silently break on the first error, causing "missing old posts" bugs.
+
+## Comments handling
+
+- Setting `pullComments` (default: false) toggles whether comments are pulled.
+- When enabled, `pull()` uses `fetchAllUserPosts` (which queries `user_posts`) instead of `fetchAllJournal` (which queries `journal`).
+- Comments (posts with `parent`) are stored in a dedicated `_comments/` subfolder at the root of the sync folder, regardless of realm. This prevents cluttering realm folders and keeps threaded context visually separated.
+- Each comment's frontmatter includes `taggr_parent_id` and `taggr_parent_link` (direct URL to the parent post on Taggr). The parent post itself is NOT fetched locally — the user can click the link to open it on Taggr.
+- `realmFromPath()` explicitly ignores `_comments` and `_general` folders when deducing realm for push.
+
 ## Communication with Taggr canister
 
 Taggr uses a **hybrid encoding**, NOT standard Candid on all methods:

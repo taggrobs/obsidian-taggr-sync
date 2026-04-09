@@ -106,3 +106,43 @@ Chronological record of all changes, bugs found, and design decisions. Each entr
 - Removed all references to personal identity (author, placeholders, commit history)
 - Published as `taggrobs/obsidian-taggr-sync` (public)
 - Created v0.1.0 release with `main.js` + `manifest.json` for direct download
+
+---
+
+## 2026-04-07 — Session 2: User feedback fixes
+
+### Phase 16: "Missing old posts" bug investigation
+- **User feedback:** "I can only see posts from late March 2025 onward. Could it be that it only pulls the last year?"
+- **Initial hypothesis:** 1-year server-side limit. Investigated Taggr backend for time-based filters. **None found** — `user.posts` Vec is iterated `.rev()` newest-to-oldest without any date cutoff. Archive system exists but archived posts are still accessible via `Post::get` (loads from stable memory into cache).
+- **Tested journal query on multiple users:**
+  - User X: 1019 posts across 33 pages, range 2021→2026 (4+ years)
+  - digitalscape: 893 posts, range Feb 2024→April 2026 (2+ years)
+  - Dp1: 578 posts, 165 ARTAG, range Jan→Sep 2024
+  - vm: 974 posts, 134 ARTAG, range Jan→Dec 2024
+  - All returned complete results. No 1-year cutoff.
+- **Real root cause:** Silent pagination failure in `fetchAllJournal`. The loop broke on any error (network, timeout, instruction limit) because `queryJSON` returned `null` which became `[]` via `|| []`, making the loop think it reached the end. User had no idea anything failed.
+- **Fix:**
+  - `fetchJournal` now returns `TaggrPost[] | null` — `null` distinctly signals error
+  - Added `fetchJournalPageWithRetry` with 3 retries and exponential backoff (500ms, 1s, 2s)
+  - `fetchAllJournal` throws on persistent failure instead of silently breaking
+  - Per-page console logging: `[TaggrClient] Journal page N: X posts (total: Y)`
+  - Progress Notice every 10 pages during long pulls
+  - Safety limit of 200 pages (6000 posts) to prevent infinite loops
+  - `sync-engine.pull()` catches errors and shows a clear Notice with instructions to check the console
+
+### Phase 17: Pull comments support
+- **User feedback:** "Maybe there's no need to separate comments into 2 categories and it's just a matter of linking the OP at the top. Pulling the OP if you're not the author wouldn't make much sense."
+- Added `pullComments` setting (toggle, default off)
+- When enabled, uses `user_posts` query (includes comments via `with_comments: true` in the backend) instead of `journal` query (top-level only)
+- Added `fetchUserPosts`, `fetchUserPostsPageWithRetry`, `fetchAllUserPosts` to taggr-client — parallel to journal methods, same retry/logging patterns
+- Each comment gets `taggr_parent_id` and `taggr_parent_link` in frontmatter (direct URL to parent on Taggr)
+- Parent post is NOT fetched or stored locally — only the link. The parent belongs to someone else most of the time, and cluttering the vault with others' posts wasn't desired.
+- Comment file naming uses same logic as posts (first line as title, fallback to `taggr-{id}.md`)
+
+### Phase 18: Dedicated comments folder
+- **User feedback:** "I don't like this with comments because it's not clear what they belong to. On Taggr they have context, here they don't. Can we pull all comments in a dedicated comments folder so they don't visually pollute?"
+- Comments now go into `taggr/_comments/` (flat, no realm subfolders) regardless of realm
+- Top-level posts still organized in `taggr/{REALM}/` subfolders
+- `realmFromPath()` updated to explicitly ignore both `_general` and `_comments` folders when deducing realm at push time
+- Graph view in Obsidian can visualize connections via `taggr_parent_link` backlinks
+

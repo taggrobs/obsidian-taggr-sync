@@ -11,11 +11,13 @@ Write and edit posts in Obsidian's markdown editor, sync them to Taggr, and pull
 - **Pull** posts from your Taggr journal into your vault as `.md` files
 - **Push** new or edited posts from Obsidian to Taggr
 - **Realm subfolders** — posts auto-organized by realm (e.g., `taggr/CRYPTO/`, `taggr/AI/`)
+- **Optional comment sync** — pull your comments into a dedicated `_comments/` folder, each linked to its parent post on Taggr
 - **Image sync** — upload images from Obsidian to Taggr, and pull Taggr images inline
 - **Bidirectional backlinks** — `[[links]]` in Obsidian become `[links](#/post/ID)` on Taggr and vice versa
 - **Cost display** — total cycle cost per post in frontmatter (text + images + edits)
 - **Publish / unpublish** — check to publish, uncheck to delete from Taggr (file stays local)
 - **Status + link** — each post shows its Taggr status and direct link in frontmatter
+- **Robust pagination** — retries on network errors, clear reporting if pulls fail
 - **Seed phrase login** — same credentials as taggr.link, derived locally, never transmitted
 - **Controller key** — alternative auth for Internet Identity users
 - **Cross-platform** — works on desktop, iOS, and Android
@@ -131,6 +133,7 @@ Open Settings → Taggr Sync:
 | **Sync Direction** | Pull only, Push only, or Bidirectional |
 | **Default Realm** | Realm for new posts — click "Test Connection" to load your realms |
 | **Realm Filter** | Only pull posts from a specific realm (empty = all) |
+| **Pull Comments** | Also pull your comments (replies to other posts), stored in `_comments/` folder with a link to the original post |
 | **Auto-sync Interval** | Minutes between automatic syncs (0 = manual only) |
 
 Click **Test Connection** to verify your credentials. It shows your cycle balance, post count, and populates the realm dropdown.

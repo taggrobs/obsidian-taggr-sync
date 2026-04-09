@@ -109,6 +109,18 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
+            .setName("Pull Comments")
+            .setDesc("Also pull your comments (replies to other posts), not just top-level posts. Each comment will have a taggr_parent_link in its frontmatter pointing to the original post on Taggr.")
+            .addToggle((toggle) =>
+                toggle
+                    .setValue(this.plugin.settings.pullComments)
+                    .onChange(async (value) => {
+                        this.plugin.settings.pullComments = value;
+                        await this.plugin.saveSettings();
+                    }),
+            );
+
+        new Setting(containerEl)
             .setName("Auto-sync Interval (minutes)")
             .setDesc("0 = manual sync only. Recommended: 5-15 minutes.")
             .addText((text) =>
