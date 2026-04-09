@@ -31,6 +31,19 @@ src/
 - Both log per-page progress to console: `[TaggrClient] Journal page N: X posts (total: Y)`.
 - `sync-engine.pull()` catches errors from fetch and shows a clear Notice with the error message, directing the user to the console for details. Previously, pagination would silently break on the first error, causing "missing old posts" bugs.
 
+## Deleted posts handling
+
+Taggr soft-deletes posts: deleted posts remain in the canister with `body=""`, `patches=[]`, `files={}`, and a non-empty `hashes` array (containing the SHA-256 of the original body for provenance). `is_deleted()` on the backend checks `!hashes.is_empty()`.
+
+- The `journal` query filters deleted posts server-side via `!post.is_deleted()`.
+- The `user_posts` query does NOT filter them. Deleted posts come through with empty body.
+- Our plugin detects deleted posts client-side via `Array.isArray(post.hashes) && post.hashes.length > 0`.
+- In `sync-engine.pull()`:
+  - Deleted posts that don't exist locally are **skipped entirely** — we don't create files for them
+  - Deleted posts that exist locally but aren't yet marked as deleted get their frontmatter rewritten to `published: false` + `taggr_status: "deleted from Taggr"` while preserving the local body
+  - Already-marked-deleted local files are skipped to avoid rewriting on every pull
+- Realm filter is bypassed for deleted posts (realm data is unreliable on deleted entries).
+
 ## Comments handling
 
 - Setting `pullComments` (default: false) toggles whether comments are pulled.

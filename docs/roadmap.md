@@ -8,6 +8,7 @@
 - [x] **Dedicated comments folder** — comments stored in `_comments/` flat folder, not mixed with realm posts
 - [x] **Parent post link in comment frontmatter** — `taggr_parent_id` and `taggr_parent_link` fields
 - [x] **Clear error reporting** — failed pulls now show a Notice with the exact error, directing users to the console
+- [x] **Deleted posts handling in user_posts** — detect deleted posts client-side (non-empty `hashes` field), skip creating files for them, mark existing locals as deleted
 
 ## Completed (v0.1.0)
 

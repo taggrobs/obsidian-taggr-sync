@@ -139,6 +139,16 @@ Chronological record of all changes, bugs found, and design decisions. Each entr
 - Parent post is NOT fetched or stored locally — only the link. The parent belongs to someone else most of the time, and cluttering the vault with others' posts wasn't desired.
 - Comment file naming uses same logic as posts (first line as title, fallback to `taggr-{id}.md`)
 
+### Phase 19: Deleted posts appearing as live (bug)
+- **User feedback:** "I see files that were unpublished (deleted) being imported as regular posts"
+- **Root cause:** `user_posts` query returns deleted posts (with empty body and populated `hashes` field). `journal` query filters them via `!post.is_deleted()` but `user_posts` does not. On Taggr, deleted posts are marked by setting `hashes` to non-empty and clearing body/patches/files. Our plugin was treating them as normal posts with empty body, creating files like `taggr-{id}.md` with `published: true`.
+- **Fix:** In `sync-engine.pull()`:
+  - Detect deleted posts via `Array.isArray(post.hashes) && post.hashes.length > 0`
+  - If already exists locally and already marked deleted → skip
+  - If exists locally and not yet marked → rewrite frontmatter with `published: false` + `taggr_status: "deleted from Taggr"` + `taggr_link`, preserve local body
+  - If doesn't exist locally → skip entirely (don't create files for remote-only deleted posts)
+  - Realm filter is bypassed for deleted posts since their realm data may be unreliable
+
 ### Phase 18: Dedicated comments folder
 - **User feedback:** "I don't like this with comments because it's not clear what they belong to. On Taggr they have context, here they don't. Can we pull all comments in a dedicated comments folder so they don't visually pollute?"
 - Comments now go into `taggr/_comments/` (flat, no realm subfolders) regardless of realm

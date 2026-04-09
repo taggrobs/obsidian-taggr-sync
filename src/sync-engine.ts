@@ -85,12 +85,50 @@ export class SyncEngine {
             // Skip comments unless pullComments is enabled
             if (post.parent && !this.settings.pullComments) continue;
 
-            // Apply realm filter
-            if (this.settings.realmFilter && post.realm !== this.settings.realmFilter) {
+            // Detect deleted posts (Taggr marks deleted posts with non-empty `hashes`)
+            const isDeleted = Array.isArray(post.hashes) && post.hashes.length > 0;
+
+            // Apply realm filter (skip check for deleted since their realm may be unreliable)
+            if (!isDeleted && this.settings.realmFilter && post.realm !== this.settings.realmFilter) {
                 continue;
             }
 
             const existingPath = localIndex.get(post.id);
+
+            // Deleted post: only update existing local file (mark as deleted);
+            // never create a new file for a post that's already deleted remotely.
+            if (isDeleted) {
+                if (!existingPath) {
+                    stats.skipped++;
+                    continue;
+                }
+                const file = this.vault.getAbstractFileByPath(existingPath);
+                if (!(file instanceof TFile)) {
+                    stats.skipped++;
+                    continue;
+                }
+                const content = await this.vault.read(file);
+                // If already marked as deleted locally, skip
+                if (content.includes("taggr_status: \"deleted from Taggr")) {
+                    stats.skipped++;
+                    continue;
+                }
+                // Mark existing local file as deleted, preserve the local body
+                const localBody = this.extractBody(content);
+                const lines: string[] = ["---"];
+                lines.push(`taggr_id: ${post.id}`);
+                const existingFm = this.parseFrontmatter(content);
+                if (existingFm?.taggr_realm) lines.push(`taggr_realm: "${existingFm.taggr_realm}"`);
+                lines.push("published: false");
+                lines.push(`taggr_status: "deleted from Taggr — was post #${post.id}"`);
+                lines.push(`taggr_link: "https://taggr.link/#/post/${post.id}"`);
+                lines.push("---");
+                lines.push("");
+                lines.push(localBody);
+                await this.vault.modify(file, lines.join("\n"));
+                stats.updated++;
+                continue;
+            }
 
             if (existingPath) {
                 // File exists — check if Taggr has newer version
