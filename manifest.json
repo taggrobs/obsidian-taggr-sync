@@ -3,7 +3,7 @@
     "name": "Taggr Sync",
     "version": "0.1.0",
     "minAppVersion": "1.0.0",
-    "description": "Publish your notes to a social network and earn from engagement. Bidirectional sync with Taggr — write in Obsidian, publish to feeds and communities, pull posts back as markdown.",
+    "description": "Bidirectional sync with Taggr, a decentralized publishing platform. Push notes to publish in social feeds, pull posts back as markdown. Earn from engagement.",
     "author": "taggrobs",
     "isDesktopOnly": false
 }
