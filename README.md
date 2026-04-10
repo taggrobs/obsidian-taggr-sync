@@ -1,10 +1,10 @@
 # Taggr Sync for Obsidian
 
+**Publish your Obsidian notes into a social network. Earn when people engage. Own your content forever.**
+
+Bidirectional sync between your Obsidian vault and [Taggr](https://taggr.link) — a decentralized publishing platform on the Internet Computer. Write in Obsidian, push to publish, pull to get your posts back. No build pipeline, no static site, no monthly subscription. Your notes land in feeds and communities where people read, comment, react, and tip.
+
 > **Developers and AI agents:** Start with [`docs/agents.md`](docs/agents.md) for architecture, design decisions, and Taggr API specifics. Then read [`docs/logs.md`](docs/logs.md) for chronological development history with justifications. [`docs/roadmap.md`](docs/roadmap.md) for planned features.
-
-Bidirectional sync between your Obsidian vault and [Taggr](https://taggr.link) — a decentralized publishing platform on the Internet Computer.
-
-Write and edit posts in Obsidian's markdown editor, sync them to Taggr, and pull posts back. Works on desktop and mobile.
 
 ## Features
 
@@ -44,7 +44,8 @@ Obsidian vault                           Taggr canister (IC)
 ### Step 1: Create a Taggr account
 
 You need one of the following to create a Taggr account:
-- **An invite code** — get one from an existing Taggr user, or register at [register.taggr.social](https://register.taggr.social) (the invite comes preloaded with credits), or
+- **Register at [obsidian.taggr.social](https://obsidian.taggr.social)** — a registration page made for Obsidian users, with free starter credits included
+- **An invite code** from an existing Taggr user, or register at [register.taggr.social](https://register.taggr.social)
 - **ICP tokens** to convert into Taggr credits yourself
 
 Once you have one of these:
@@ -285,6 +286,8 @@ Copy `main.js` and `manifest.json` to your vault's `.obsidian/plugins/taggr-sync
 - Browser-compatible build (platform: browser with polyfills) — works on mobile
 - Bundle size: ~295kb minified
 - Canister ID: `6qfxa-ryaaa-aaaai-qbhsq-cai`
+- Canonical URL: [https://6qfxa-ryaaa-aaaai-qbhsq-cai.icp0.io](https://6qfxa-ryaaa-aaaai-qbhsq-cai.icp0.io/) (the canister served directly from the Internet Computer — censorship-resistant, no DNS dependency)
+- Friendly frontends: [taggr.link](https://taggr.link), [obsidian.taggr.social](https://obsidian.taggr.social) (registration for Obsidian users)
 
 ## Current limitations
 
