@@ -111,14 +111,14 @@ export class TaggrClient {
         while (page < maxPages) {
             const posts = await this.fetchJournalPageWithRetry(handle, page);
             if (posts.length === 0) {
-                console.log(`[TaggrClient] Journal complete at page ${page} (empty response)`);
+                console.debug(`[TaggrClient] Journal complete at page ${page} (empty response)`);
                 break;
             }
             allPosts.push(...posts);
             onProgress?.(page, allPosts.length);
-            console.log(`[TaggrClient] Journal page ${page}: ${posts.length} posts (total: ${allPosts.length})`);
+            console.debug(`[TaggrClient] Journal page ${page}: ${posts.length} posts (total: ${allPosts.length})`);
             if (posts.length < pageSize) {
-                console.log(`[TaggrClient] Journal complete at page ${page} (partial page)`);
+                console.debug(`[TaggrClient] Journal complete at page ${page} (partial page)`);
                 break;
             }
             page++;
@@ -183,14 +183,14 @@ export class TaggrClient {
         while (page < maxPages) {
             const posts = await this.fetchUserPostsPageWithRetry(handle, page);
             if (posts.length === 0) {
-                console.log(`[TaggrClient] user_posts complete at page ${page} (empty)`);
+                console.debug(`[TaggrClient] user_posts complete at page ${page} (empty)`);
                 break;
             }
             allPosts.push(...posts);
             onProgress?.(page, allPosts.length);
-            console.log(`[TaggrClient] user_posts page ${page}: ${posts.length} (total: ${allPosts.length})`);
+            console.debug(`[TaggrClient] user_posts page ${page}: ${posts.length} (total: ${allPosts.length})`);
             if (posts.length < pageSize) {
-                console.log(`[TaggrClient] user_posts complete at page ${page} (partial)`);
+                console.debug(`[TaggrClient] user_posts complete at page ${page} (partial)`);
                 break;
             }
             page++;
@@ -345,7 +345,7 @@ export class TaggrClient {
     async deletePost(id: PostId, versions: string[]): Promise<{ ok: true } | { err: string }> {
         try {
             const arg = new TextEncoder().encode(JSON.stringify([id, versions]));
-            await this.callRaw("delete_post", arg.buffer as ArrayBuffer);
+            await this.callRaw("delete_post", arg.buffer);
             return { ok: true };
         } catch (error) {
             return { err: String(error) };
@@ -364,16 +364,16 @@ export class TaggrClient {
                 this.canisterId,
                 {
                     methodName: method,
-                    arg: argBytes.buffer as ArrayBuffer,
+                    arg: argBytes.buffer,
                 },
             );
 
-            if (response.status !== "replied" || !response.reply) {
+            if (!("reply" in response) || !response.reply) {
                 console.error(`Taggr query ${method} failed:`, response);
                 return null;
             }
 
-            const text = new TextDecoder().decode(response.reply.arg as ArrayBuffer);
+            const text = new TextDecoder().decode(response.reply.arg);
             return JSON.parse(text) as T;
         } catch (error) {
             console.error(`Taggr query ${method} error:`, error);

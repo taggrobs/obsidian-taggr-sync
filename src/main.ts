@@ -33,7 +33,7 @@ export default class TaggrSyncPlugin extends Plugin {
         // ─── Commands ──────────────────────────────────────────────
 
         this.addCommand({
-            id: "taggr-sync-pull",
+            id: "pull",
             name: "Pull posts from Taggr",
             callback: async () => {
                 await this.ensureReady();
@@ -42,7 +42,7 @@ export default class TaggrSyncPlugin extends Plugin {
         });
 
         this.addCommand({
-            id: "taggr-sync-push",
+            id: "push",
             name: "Push changes to Taggr",
             callback: async () => {
                 await this.ensureReady();
@@ -51,7 +51,7 @@ export default class TaggrSyncPlugin extends Plugin {
         });
 
         this.addCommand({
-            id: "taggr-sync-both",
+            id: "sync",
             name: "Sync with Taggr (pull + push)",
             callback: async () => {
                 await this.ensureReady();
@@ -60,7 +60,7 @@ export default class TaggrSyncPlugin extends Plugin {
         });
 
         this.addCommand({
-            id: "taggr-new-post",
+            id: "new-post",
             name: "Create new Taggr post",
             callback: async () => {
                 await this.createNewPostFile();
@@ -69,9 +69,8 @@ export default class TaggrSyncPlugin extends Plugin {
 
         // ─── Ribbon icon ───────────────────────────────────────────
 
-        this.addRibbonIcon("refresh-cw", "Sync with Taggr", async () => {
-            await this.ensureReady();
-            await this.syncEngine?.sync();
+        this.addRibbonIcon("refresh-cw", "Sync with Taggr", () => {
+            void this.ensureReady().then(() => this.syncEngine?.sync());
         });
 
         // ─── Settings tab ──────────────────────────────────────────
@@ -82,14 +81,14 @@ export default class TaggrSyncPlugin extends Plugin {
 
         this.resetSyncInterval();
 
-        console.log("Taggr Sync plugin loaded.");
+        console.debug("Taggr Sync plugin loaded.");
     }
 
     onunload() {
         if (this.syncIntervalId) {
             window.clearInterval(this.syncIntervalId);
         }
-        console.log("Taggr Sync plugin unloaded.");
+        console.debug("Taggr Sync plugin unloaded.");
     }
 
     // ─── INITIALIZATION ────────────────────────────────────────────────

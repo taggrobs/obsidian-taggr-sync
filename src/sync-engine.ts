@@ -15,7 +15,6 @@ import type {
     PostId,
     TaggrFrontmatter,
     TaggrSyncSettings,
-    SyncAction,
 } from "./types";
 
 export class SyncEngine {
@@ -239,7 +238,7 @@ export class SyncEngine {
             const content = await this.vault.read(file);
             const frontmatter = this.parseFrontmatter(content);
             // Convert Obsidian backlinks to Taggr links, and bucket URLs back to /blob/xxx
-            let body = await this.backlinksToTaggrLinks(this.extractBody(content), localIndex);
+            let body = this.backlinksToTaggrLinks(this.extractBody(content), localIndex);
             body = body.replace(
                 /\(https:\/\/[a-z0-9-]+\.raw\.icp0\.io\/image\?offset=\d+&len=\d+\)/g,
                 (match) => {
@@ -287,7 +286,7 @@ export class SyncEngine {
             }
 
             // Convert body back to Taggr format for comparison and pushing
-            let taggrbody = await this.backlinksToTaggrLinks(body, localIndex);
+            let taggrbody = this.backlinksToTaggrLinks(body, localIndex);
             taggrbody = taggrbody.replace(
                 /\(https:\/\/[a-z0-9-]+\.raw\.icp0\.io\/image\?offset=\d+&len=\d+\)/g,
                 (match) => match, // keep as-is for now
@@ -426,7 +425,7 @@ export class SyncEngine {
         const reactionParts: string[] = [];
         for (const [id, users] of Object.entries(post.reactions || {})) {
             const name = REACTION_EMOJI[Number(id)] || `r${id}`;
-            reactionParts.push(`${name}:${(users as number[]).length}`);
+            reactionParts.push(`${name}:${users.length}`);
         }
 
         const fm: TaggrFrontmatter = {
@@ -593,7 +592,7 @@ export class SyncEngine {
         const firstLine = post.body.split("\n")[0] || "";
         let title = firstLine
             .replace(/^#+\s*/, "")  // strip markdown heading
-            .replace(/[\\/:*?"<>|#^[\]]/g, "")  // strip illegal chars
+            .replace(/[\\/:*?"<>|#^\[\]]/g, "")  // strip illegal chars
             .trim()
             .slice(0, 80);
 
@@ -657,7 +656,7 @@ export class SyncEngine {
 
         // Process standard markdown images
         for (const match of body.matchAll(mdImageRegex)) {
-            const [fullMatch, alt, imagePath] = match;
+            const [fullMatch, , imagePath] = match;
             const resolvedPath = imagePath.startsWith("./")
                 ? `${folder}/${imagePath.slice(2)}`
                 : imagePath.startsWith("/")
@@ -757,7 +756,7 @@ export class SyncEngine {
 
         // Blob cost (charged once on creation)
         const blobBytes = Object.values(post.files || {}).reduce(
-            (sum, [_offset, len]) => sum + len, 0,
+            (sum, [, len]) => sum + len, 0,
         );
         const blobCost = blobBytes > 0
             ? Math.ceil((blobBytes * BLOB_COST) / MAX_BLOB_SIZE)
@@ -768,7 +767,7 @@ export class SyncEngine {
 
         // Each edit is charged with accumulated patches
         let accumulatedPatchLen = 0;
-        for (const [_ts, diff] of patches) {
+        for (const [, diff] of patches) {
             accumulatedPatchLen += diff.length;
             const editCost = POST_COST * (Math.floor((bodyLen + accumulatedPatchLen) / 1024) + 1);
             totalCost += editCost;
@@ -806,7 +805,7 @@ export class SyncEngine {
      * [[Post Title]] → [Post Title](#/post/ID) if post is synced
      * [[@username]] → @username
      */
-    private async backlinksToTaggrLinks(body: string, localIndex: Map<PostId, string>): Promise<string> {
+    private backlinksToTaggrLinks(body: string, localIndex: Map<PostId, string>): string {
         // Build reverse index: filename → taggr_id
         const nameToId = new Map<string, PostId>();
         for (const [id, path] of localIndex) {

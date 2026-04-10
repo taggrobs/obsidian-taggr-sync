@@ -2,7 +2,7 @@
  * Settings tab for Taggr Sync plugin.
  */
 
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type TaggrSyncPlugin from "./main";
 
 export class TaggrSyncSettingTab extends PluginSettingTab {
@@ -19,10 +19,10 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         // ─── Connection ────────────────────────────────────────────
 
-        containerEl.createEl("h2", { text: "Connection" });
+        new Setting(containerEl).setName("Connection").setHeading();
 
         new Setting(containerEl)
-            .setName("Taggr Handle")
+            .setName("Taggr handle")
             .setDesc("Your username on Taggr (for pulling your journal).")
             .addText((text) =>
                 text
@@ -35,7 +35,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Seed Phrase")
+            .setName("Seed phrase")
             .setDesc(
                 "Your Taggr seed phrase — the same one you use to log in on taggr.link. " +
                 "The key is derived locally (never sent anywhere). " +
@@ -52,7 +52,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Identity Key (hex)")
+            .setName("Identity key (hex)")
             .setDesc(
                 "Alternative: raw Ed25519 private key (hex). " +
                 "Use this OR seed phrase, not both. Seed phrase takes priority.",
@@ -78,10 +78,10 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         // ─── Sync ──────────────────────────────────────────────────
 
-        containerEl.createEl("h2", { text: "Sync" });
+        new Setting(containerEl).setName("Sync").setHeading();
 
         new Setting(containerEl)
-            .setName("Sync Folder")
+            .setName("Sync folder")
             .setDesc("Folder in vault where Taggr posts are synced.")
             .addText((text) =>
                 text
@@ -94,7 +94,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Sync Direction")
+            .setName("Sync direction")
             .setDesc("Pull (read from Taggr), Push (write to Taggr), or Both.")
             .addDropdown((dropdown) =>
                 dropdown
@@ -109,7 +109,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Pull Comments")
+            .setName("Pull comments")
             .setDesc("Also pull your comments (replies to other posts), not just top-level posts. Each comment will have a taggr_parent_link in its frontmatter pointing to the original post on Taggr.")
             .addToggle((toggle) =>
                 toggle
@@ -121,7 +121,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Auto-sync Interval (minutes)")
+            .setName("Auto-sync interval (minutes)")
             .setDesc("0 = manual sync only. Recommended: 5-15 minutes.")
             .addText((text) =>
                 text
@@ -138,7 +138,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
         const realms = Array.isArray(this.plugin.settings.cachedRealms) ? this.plugin.settings.cachedRealms : [];
 
         new Setting(containerEl)
-            .setName("Realm Filter")
+            .setName("Realm filter")
             .setDesc("Only pull posts from this realm. Empty = all realms.")
             .addDropdown((dropdown) => {
                 dropdown.addOption("", "(all realms)");
@@ -153,11 +153,11 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
                     });
             });
         new Setting(containerEl)
-            .setName("Default Realm for New Posts")
+            .setName("Default realm for new posts")
             .setDesc(
                 realms.length > 0
                     ? `Post to this realm by default. You have ${realms.length} realms.`
-                    : "No realms loaded yet. Use Test Connection to fetch your realms.",
+                    : "No realms loaded yet. Use Test connection to fetch your realms.",
             )
             .addDropdown((dropdown) => {
                 dropdown.addOption("", "(no realm)");
@@ -174,7 +174,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         // ─── Advanced ──────────────────────────────────────────────
 
-        containerEl.createEl("h2", { text: "Advanced" });
+        new Setting(containerEl).setName("Advanced").setHeading();
 
         new Setting(containerEl)
             .setName("Canister ID")
@@ -189,7 +189,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("IC Host")
+            .setName("IC host")
             .setDesc("Internet Computer host URL.")
             .addText((text) =>
                 text
@@ -202,10 +202,10 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         // ─── Actions ───────────────────────────────────────────────
 
-        containerEl.createEl("h2", { text: "Actions" });
+        new Setting(containerEl).setName("Actions").setHeading();
 
         new Setting(containerEl)
-            .setName("Generate Identity")
+            .setName("Generate identity")
             .setDesc("Generate a new Ed25519 keypair. Copy the principal and add it as a controller on Taggr.")
             .addButton((button) =>
                 button.setButtonText("Generate").onClick(async () => {
@@ -226,7 +226,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
                     // Copy principal to clipboard
                     await navigator.clipboard.writeText(principal);
-                    new (await import("obsidian")).Notice(
+                    new Notice(
                         `Key generated! Principal copied to clipboard:\n${principal}\n\nAdd this as a controller on your Taggr account.`,
                         10000,
                     );
@@ -234,12 +234,11 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("Test Connection")
+            .setName("Test connection")
             .setDesc("Verify the connection to Taggr canister.")
             .addButton((button) =>
                 button.setButtonText("Test").onClick(async () => {
                     await this.plugin.initClient();
-                    const { Notice } = await import("obsidian");
 
                     // Fetch user profile (balance + realms)
                     const user = await this.plugin.client?.fetchUser(

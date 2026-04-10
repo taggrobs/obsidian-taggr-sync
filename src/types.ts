@@ -77,16 +77,6 @@ export type TaggrFrontmatter = {
 };
 
 /**
- * Sync direction for a file.
- */
-export type SyncAction =
-    | { type: "pull_new"; post: TaggrPost }
-    | { type: "pull_update"; post: TaggrPost; localPath: string }
-    | { type: "push_new"; localPath: string; body: string; realm?: string }
-    | { type: "push_update"; localPath: string; body: string; postId: PostId; realm?: string }
-    | { type: "conflict"; post: TaggrPost; localPath: string };
-
-/**
  * Plugin settings persisted in Obsidian data.json
  */
 export interface TaggrSyncSettings {
