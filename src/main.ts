@@ -34,7 +34,7 @@ export default class TaggrSyncPlugin extends Plugin {
 
         this.addCommand({
             id: "pull",
-            name: "Pull posts from Taggr",
+            name: "Pull posts from taggr",
             callback: async () => {
                 await this.ensureReady();
                 await this.syncEngine?.pull();
@@ -43,7 +43,7 @@ export default class TaggrSyncPlugin extends Plugin {
 
         this.addCommand({
             id: "push",
-            name: "Push changes to Taggr",
+            name: "Push changes to taggr",
             callback: async () => {
                 await this.ensureReady();
                 await this.syncEngine?.push();
@@ -52,7 +52,7 @@ export default class TaggrSyncPlugin extends Plugin {
 
         this.addCommand({
             id: "sync",
-            name: "Sync with Taggr (pull + push)",
+            name: "Sync with taggr (pull + push)",
             callback: async () => {
                 await this.ensureReady();
                 await this.syncEngine?.sync();
@@ -61,7 +61,7 @@ export default class TaggrSyncPlugin extends Plugin {
 
         this.addCommand({
             id: "new-post",
-            name: "Create new Taggr post",
+            name: "Create new taggr post",
             callback: async () => {
                 await this.createNewPostFile();
             },
@@ -69,7 +69,7 @@ export default class TaggrSyncPlugin extends Plugin {
 
         // ─── Ribbon icon ───────────────────────────────────────────
 
-        this.addRibbonIcon("refresh-cw", "Sync with Taggr", () => {
+        this.addRibbonIcon("refresh-cw", "Sync with taggr", () => {
             void this.ensureReady().then(() => this.syncEngine?.sync());
         });
 
@@ -113,7 +113,7 @@ export default class TaggrSyncPlugin extends Plugin {
             }
         } catch (error) {
             console.error("Failed to initialize Taggr client:", error);
-            new Notice("Taggr Sync: Failed to connect. Check settings.");
+            new Notice("Taggr sync: failed to connect. Check settings.");
         }
     }
 
@@ -134,9 +134,8 @@ export default class TaggrSyncPlugin extends Plugin {
         const minutes = this.settings.syncIntervalMinutes;
         if (minutes > 0) {
             this.syncIntervalId = window.setInterval(
-                async () => {
-                    await this.ensureReady();
-                    await this.syncEngine?.sync();
+                () => {
+                    void this.ensureReady().then(() => this.syncEngine?.sync());
                 },
                 minutes * 60 * 1000,
             );

@@ -38,11 +38,11 @@ export class SyncEngine {
         const stats = { created: 0, updated: 0, skipped: 0 };
 
         if (!this.settings.handle) {
-            new Notice("Taggr Sync: Set your Taggr handle in settings first.");
+            new Notice("Taggr sync: set your taggr handle in settings first.");
             return stats;
         }
 
-        new Notice("Taggr Sync: Pulling posts...");
+        new Notice("Taggr sync: pulling posts...");
 
         let posts: TaggrPost[];
         try {
@@ -68,7 +68,7 @@ export class SyncEngine {
         }
 
         if (!posts.length) {
-            new Notice("Taggr Sync: No posts found.");
+            new Notice("Taggr sync: no posts found.");
             return stats;
         }
 
@@ -199,7 +199,7 @@ export class SyncEngine {
         const stats = { created: 0, updated: 0, errors: 0 };
 
         if (!this.settings.identityKeyHex && !this.settings.seedPhrase) {
-            new Notice("Taggr Sync: Set your seed phrase or identity key in settings to push posts.");
+            new Notice("Taggr sync: set your seed phrase or identity key in settings to push posts.");
             return stats;
         }
 
@@ -214,7 +214,7 @@ export class SyncEngine {
 
         const folder = this.vault.getAbstractFileByPath(this.settings.syncFolder);
         if (!(folder instanceof TFolder)) {
-            new Notice("Taggr Sync: Sync folder not found.");
+            new Notice("Taggr sync: sync folder not found.");
             return stats;
         }
 
@@ -529,7 +529,7 @@ export class SyncEngine {
                     break;
                 case "tags":
                     fm.tags = value
-                        .replace(/[\[\]"]/g, "")
+                        .replace(/[[\]"]/g, "")
                         .split(",")
                         .map((t) => t.trim())
                         .filter(Boolean);
@@ -592,7 +592,7 @@ export class SyncEngine {
         const firstLine = post.body.split("\n")[0] || "";
         let title = firstLine
             .replace(/^#+\s*/, "")  // strip markdown heading
-            .replace(/[\\/:*?"<>|#^\[\]]/g, "")  // strip illegal chars
+            .replace(/[\\/:*?"<>|#^[\]]/g, "")  // strip illegal chars
             .trim()
             .slice(0, 80);
 

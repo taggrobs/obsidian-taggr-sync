@@ -23,10 +23,10 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Taggr handle")
-            .setDesc("Your username on Taggr (for pulling your journal).")
+            .setDesc("Your username on taggr (for pulling your journal).")
             .addText((text) =>
                 text
-                    .setPlaceholder("your_handle")
+                    .setPlaceholder("Your_handle")
                     .setValue(this.plugin.settings.handle)
                     .onChange(async (value) => {
                         this.plugin.settings.handle = value;
@@ -82,10 +82,10 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Sync folder")
-            .setDesc("Folder in vault where Taggr posts are synced.")
+            .setDesc("Folder in vault where taggr posts are synced.")
             .addText((text) =>
                 text
-                    .setPlaceholder("taggr")
+                    .setPlaceholder("Taggr")
                     .setValue(this.plugin.settings.syncFolder)
                     .onChange(async (value) => {
                         this.plugin.settings.syncFolder = value || "taggr";
@@ -95,7 +95,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Sync direction")
-            .setDesc("Pull (read from Taggr), Push (write to Taggr), or Both.")
+            .setDesc("Pull (read from taggr), push (write to taggr), or both.")
             .addDropdown((dropdown) =>
                 dropdown
                     .addOption("pull", "Pull only (read)")
@@ -110,7 +110,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Pull comments")
-            .setDesc("Also pull your comments (replies to other posts), not just top-level posts. Each comment will have a taggr_parent_link in its frontmatter pointing to the original post on Taggr.")
+            .setDesc("Also pull your comments (replies to other posts), not just top-level posts. Each comment will have a taggr_parent_link in its frontmatter pointing to the original post on taggr.")
             .addToggle((toggle) =>
                 toggle
                     .setValue(this.plugin.settings.pullComments)
@@ -189,8 +189,8 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName("IC host")
-            .setDesc("Internet Computer host URL.")
+            .setName("Ic host")
+            .setDesc("Internet computer host URL.")
             .addText((text) =>
                 text
                     .setValue(this.plugin.settings.icHost)
@@ -206,7 +206,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Generate identity")
-            .setDesc("Generate a new Ed25519 keypair. Copy the principal and add it as a controller on Taggr.")
+            .setDesc("Generate a new ed25519 keypair. Copy the principal and add it as a controller on taggr.")
             .addButton((button) =>
                 button.setButtonText("Generate").onClick(async () => {
                     const { Ed25519KeyIdentity } = await import(
@@ -235,7 +235,7 @@ export class TaggrSyncSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName("Test connection")
-            .setDesc("Verify the connection to Taggr canister.")
+            .setDesc("Verify the connection to taggr canister.")
             .addButton((button) =>
                 button.setButtonText("Test").onClick(async () => {
                     await this.plugin.initClient();
