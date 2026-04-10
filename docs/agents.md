@@ -116,6 +116,14 @@ Two methods:
 
 Seed phrase takes priority if both are set.
 
+## Release & distribution
+
+- **GitHub Release:** Tag must match `manifest.json` version exactly (e.g. `0.1.0`, NOT `v0.1.0`). Obsidian's plugin system fetches assets from the release matching `manifest.version`.
+- **Required release assets:** `main.js`, `manifest.json`, `versions.json` (as individual files, not in source archives)
+- **GitHub Actions:** `.github/workflows/release.yml` auto-builds and creates a draft Release on tag push
+- **Community plugin listing:** Entry in `obsidianmd/obsidian-releases` `community-plugins.json`. The `description` field must match `manifest.json` exactly. Must not contain "Obsidian" or "this plugin". Must end with `.?!)`. Max 250 chars.
+- **Obsidian community plugin validation bot** checks: template compliance, description rules, release tag match, `id`/`name`/`description` match between PR entry and `manifest.json`, license file presence, `maintainer_can_modify`, single file changed
+
 ## Build
 
 ```bash

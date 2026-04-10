@@ -50,7 +50,7 @@
 
 - [ ] **MCP wrapper** — expose plugin functionality as an MCP server so AI agents (Claude, GPT) can read/write to the vault and Taggr simultaneously. This would allow agents to publish research, summarize engagement, or manage a content calendar.
 - [ ] **Encrypted realm support** — if Taggr implements encrypted/private realms, enable private vault sync through the blockchain. Encrypted notes, synced across devices via IC, accessible only to authorized principals.
-- [ ] **Submit to Obsidian community plugins** — PR on `obsidianmd/obsidian-releases` to appear in the official plugin browser. Requires review process compliance.
+- [x] **Submit to Obsidian community plugins** — PR submitted: obsidianmd/obsidian-releases#11813. Release tag `0.1.0` with `main.js`, `manifest.json`, `versions.json`. Awaiting review.
 - [ ] **Taggr as full vault backend** — replace Obsidian Sync entirely. Every note (not just published posts) stored encrypted on IC. This would make Taggr a true decentralized Obsidian backend.
 
 ## Won't do (out of scope)

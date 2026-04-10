@@ -156,3 +156,36 @@ Chronological record of all changes, bugs found, and design decisions. Each entr
 - `realmFromPath()` updated to explicitly ignore both `_general` and `_comments` folders when deducing realm at push time
 - Graph view in Obsidian can visualize connections via `taggr_parent_link` backlinks
 
+---
+
+## 2026-04-10 — Session 3: v0.1.0 release & community plugin submission
+
+### Phase 20: Prepare v0.1.0 release
+- Added GPL-3.0 `LICENSE` file (matching Taggr's license)
+- Created `versions.json` for Obsidian compatibility tracking (`"0.1.0": "1.0.0"`)
+- Created `.github/workflows/release.yml` — GitHub Actions workflow that auto-builds and creates a Release when a tag is pushed
+- Polished `manifest.json` description for community plugin browser
+- Rewrote `README.md` intro + added obsidian.taggr.social registration link
+- Added `WHAT-IS-TAGGR.md` standalone explainer for new users
+- **GitHub token scope issue:** Initial push was rejected because the PAT lacked `workflow` scope (required for pushing `.github/workflows/` files). Resolved by generating a new token with `workflow` scope.
+
+### Phase 21: GitHub Release tag fix
+- Original release was tagged `v0.1.0` — Obsidian requires the tag to match `manifest.json` version exactly (no `v` prefix)
+- Deleted `v0.1.0` release, removed old tags
+- Recreated release as `0.1.0` with all 3 required assets: `main.js`, `manifest.json`, `versions.json`
+- Updated `manifest.json` description to remove the word "Obsidian" (community plugin guideline: redundant in plugin browser context)
+
+### Phase 22: Community plugin submission PR
+- Forked `obsidianmd/obsidian-releases` under `taggrobs` account
+- Added entry to `community-plugins.json` (id: `taggr-sync`, repo: `taggrobs/obsidian-taggr-sync`)
+- **First validation failure:** Bot ran on old PR body (before template update) — 3 errors: wrong template, "Obsidian" in description, `v` prefix on release tag
+- Fixed all 3 issues, closed + reopened PR to re-trigger validation
+- PR: obsidianmd/obsidian-releases#11813
+- **Validation bot checks learned:**
+  - PR body must contain exact template strings (substring match, not structure)
+  - Description must end with `.?!)`, no "Obsidian", no "this plugin", max 250 chars
+  - `community-plugins.json` description must match `manifest.json` description exactly
+  - Release tag must match `manifest.version` exactly (no `v` prefix)
+  - `maintainer_can_modify` must be `true`
+  - Only `community-plugins.json` should be changed (1 file)
+
