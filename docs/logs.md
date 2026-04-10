@@ -189,3 +189,18 @@ Chronological record of all changes, bugs found, and design decisions. Each entr
   - `maintainer_can_modify` must be `true`
   - Only `community-plugins.json` should be changed (1 file)
 
+### Phase 23: Filename collision bug fix
+- **User feedback:** "Plugin says 3996 items pulled but only ~760 files exist locally" (MntYetti). Same issue on radudaniel: 9000 fetched but only 52 files created.
+- **Root cause 1:** `postToFileName()` generated filenames from the first line of post body (truncated to 80 chars) with no post ID. Multiple posts with identical first lines (especially comments like "Please remove the post before incurring...") produced the same filename. `vault.create()` threw "File already exists" which was uncaught, killing the entire pull loop.
+- **Root cause 2:** `maxPages` was 200 (journal) / 300 (user_posts), too low for heavy users (radudaniel has 9986 posts = 333 pages).
+- **Fix:**
+  - `postToFileName()` now appends post ID: `Title (12345).md` — guarantees uniqueness
+  - Added existence check before `vault.create()` with fallback to `taggr-{id}.md`
+  - Wrapped `vault.create()` in try/catch — one failed file no longer kills the entire pull
+  - Raised `maxPages` to 500 for both journal and user_posts (supports up to 15000 posts)
+
+### Phase 24: Human-readable date in frontmatter
+- Replaced `taggr_timestamp: 1710513000000000000` (nanoseconds) with `taggr_date: "2024-03-15 14:30"` (UTC)
+- `parseFrontmatter` reads both `taggr_date` and legacy `taggr_timestamp` for backwards compatibility
+- Does not affect hash-based change detection (hash is on body only, not frontmatter)
+

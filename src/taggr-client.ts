@@ -106,7 +106,7 @@ export class TaggrClient {
         const allPosts: TaggrPost[] = [];
         let page = 0;
         const pageSize = 30; // Taggr's CONFIG.feed_page_size
-        const maxPages = 200; // Safety limit: 6000 posts max
+        const maxPages = 500; // Safety limit: 15000 posts max
 
         while (page < maxPages) {
             const posts = await this.fetchJournalPageWithRetry(handle, page);
@@ -178,7 +178,7 @@ export class TaggrClient {
         const allPosts: TaggrPost[] = [];
         let page = 0;
         const pageSize = 30;
-        const maxPages = 300; // Higher limit since comments add to count
+        const maxPages = 500; // Higher limit since comments add to count
 
         while (page < maxPages) {
             const posts = await this.fetchUserPostsPageWithRetry(handle, page);

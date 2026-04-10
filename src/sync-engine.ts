@@ -174,10 +174,19 @@ export class SyncEngine {
                 await this.ensureFolder(subFolder);
 
                 const fileName = this.postToFileName(post);
-                const filePath = normalizePath(`${subFolder}/${fileName}`);
+                let filePath = normalizePath(`${subFolder}/${fileName}`);
                 const content = this.buildFileContent(post);
-                await this.vault.create(filePath, content);
-                stats.created++;
+                // If file already exists (unlikely with post ID in name), use fallback
+                if (this.vault.getAbstractFileByPath(filePath)) {
+                    filePath = normalizePath(`${subFolder}/taggr-${post.id}.md`);
+                }
+                try {
+                    await this.vault.create(filePath, content);
+                    stats.created++;
+                } catch (e) {
+                    console.error(`Failed to create file for post ${post.id}:`, e);
+                    stats.skipped++;
+                }
             }
         }
 
@@ -456,7 +465,8 @@ export class SyncEngine {
         lines.push(`taggr_id: ${fm.taggr_id}`);
         lines.push(`taggr_user: ${fm.taggr_user}`);
         if (fm.taggr_realm) lines.push(`taggr_realm: "${fm.taggr_realm}"`);
-        lines.push(`taggr_timestamp: ${fm.taggr_timestamp}`);
+        const date = new Date(fm.taggr_timestamp / 1_000_000);
+        lines.push(`taggr_date: "${date.toISOString().slice(0, 16).replace("T", " ")}"`);
         if (fm.taggr_hash) lines.push(`taggr_hash: "${fm.taggr_hash}"`);
         lines.push(`taggr_patches: ${fm.taggr_patches}`);
         if (fm.taggr_cost) lines.push(`taggr_cost: ${fm.taggr_cost}`);
@@ -512,9 +522,16 @@ export class SyncEngine {
                 case "taggr_realm":
                     fm.taggr_realm = value.replace(/"/g, "");
                     break;
-                case "taggr_timestamp":
+                case "taggr_timestamp": {
                     fm.taggr_timestamp = parseInt(value);
                     break;
+                }
+                case "taggr_date": {
+                    // Parse "YYYY-MM-DD HH:MM" back to nanosecond timestamp
+                    const d = new Date(value.replace(/"/g, "").replace(" ", "T") + ":00.000Z");
+                    fm.taggr_timestamp = d.getTime() * 1_000_000;
+                    break;
+                }
                 case "taggr_hash":
                     fm.taggr_hash = value.replace(/"/g, "");
                     break;
@@ -590,14 +607,14 @@ export class SyncEngine {
      */
     private postToFileName(post: TaggrPost): string {
         const firstLine = post.body.split("\n")[0] || "";
-        let title = firstLine
+        const title = firstLine
             .replace(/^#+\s*/, "")  // strip markdown heading
             .replace(/[\\/:*?"<>|#^[\]]/g, "")  // strip illegal chars
             .trim()
             .slice(0, 80);
 
-        if (!title) title = `taggr-${post.id}`;
-        return `${title}.md`;
+        if (!title) return `taggr-${post.id}.md`;
+        return `${title} (${post.id}).md`;
     }
 
     /**
