@@ -1,8 +1,8 @@
 {
     "id": "taggr-sync",
     "name": "Taggr Sync",
-    "version": "0.1.0",
-    "minAppVersion": "1.0.0",
+    "version": "0.1.1",
+    "minAppVersion": "1.4.0",
     "description": "Bidirectional sync with Taggr, a decentralized publishing platform. Push notes to publish in social feeds, pull posts back as markdown. Earn from engagement.",
     "author": "taggrobs",
     "isDesktopOnly": false

@@ -89,7 +89,7 @@ export class TaggrClient {
             lastError = `Query error on page ${page}`;
             // Exponential backoff: 500ms, 1s, 2s
             if (attempt < maxRetries - 1) {
-                await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+                await new Promise((r) => activeWindow.setTimeout(r, 500 * Math.pow(2, attempt)));
             }
         }
         throw new Error(`Failed to fetch journal page ${page} after ${maxRetries} retries: ${lastError}`);
@@ -162,7 +162,7 @@ export class TaggrClient {
             if (posts !== null) return posts;
             lastError = `Query error on page ${page}`;
             if (attempt < maxRetries - 1) {
-                await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+                await new Promise((r) => activeWindow.setTimeout(r, 500 * Math.pow(2, attempt)));
             }
         }
         throw new Error(`Failed to fetch user_posts page ${page} after ${maxRetries} retries: ${lastError}`);

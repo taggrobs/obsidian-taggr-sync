@@ -1,6 +1,6 @@
 {
     "name": "obsidian-taggr-sync",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Sync Obsidian vault with Taggr on the Internet Computer",
     "main": "main.js",
     "scripts": {
@@ -10,7 +10,6 @@
     "devDependencies": {
         "@types/node": "^20.0.0",
         "@typescript-eslint/parser": "^8.58.1",
-        "builtin-modules": "^3.3.0",
         "esbuild": "^0.20.0",
         "eslint": "^9.39.4",
         "eslint-plugin-obsidianmd": "^0.1.9",
